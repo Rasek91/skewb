@@ -1,2 +1,3 @@
-# skewb
-Skewb implementation in GO
+# Skewb
+
+Skewb implementation in GO.
