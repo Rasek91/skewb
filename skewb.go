@@ -16,6 +16,7 @@ type Skewber interface {
 	MovesApplier
 	CenterDowner
 	Equaler
+	ExactEqualer
 	OneLayerMirrorer
 	CornerColorsGetter
 	CenterColorGetter
@@ -44,6 +45,10 @@ type CenterDowner interface {
 
 type Equaler interface {
 	Equal(other Skewber) bool
+}
+
+type ExactEqualer interface {
+	ExactEqual(other Skewber) bool
 }
 
 type OneLayerMirrorer interface {
@@ -699,6 +704,10 @@ func (s *Skewb) Equal(other Skewber) bool {
 	}
 
 	return notEqual
+}
+
+func (s *Skewb) ExactEqual(other Skewber) bool {
+	return s.equal(other)
 }
 
 func (s *Skewb) equal(other Skewber) bool {
