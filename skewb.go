@@ -17,7 +17,7 @@ type Skewber interface {
 	CenterDowner
 	Equaler
 	ExactEqualer
-	OneLayerMirrorer
+	Mirrorer
 	CornerColorsGetter
 	CenterColorGetter
 }
@@ -51,8 +51,17 @@ type ExactEqualer interface {
 	ExactEqual(other Skewber) bool
 }
 
+type Mirrorer interface {
+	OneLayerMirrorer
+	FullMirrorer
+}
+
 type OneLayerMirrorer interface {
 	OneLayerMirror(other Skewber, layerColor string) bool
+}
+
+type FullMirrorer interface {
+	FullMirror(other Skewber) bool
 }
 
 type CornerColorsGetter interface {
@@ -747,6 +756,7 @@ func (s *Skewb) equal(other Skewber) bool {
 }
 
 func (s *Skewb) OneLayerMirror(other Skewber, layerColor string) bool {
+	s.CenterDown(layerColor)
 	other.CenterDown(s.down.color)
 
 	if s.oneLayerMirror(other, layerColor) {
@@ -808,79 +818,50 @@ func (s *Skewb) oneLayerMirror(other Skewber, layerColor string) bool {
 		otherLayerCorners = append(otherLayerCorners, other.GetDLBCornerColors())
 	}
 
-	sLayerColors := [4][3]int{}
-
-	switch {
-	case sLayerCorners[0][0] == layerColor:
-		sLayerColors[0][0] = layerCornerColor
-		sLayerColors[0][1] = firstCornerColor
-		sLayerColors[0][2] = secondCornerColor
-	case sLayerCorners[0][1] == layerColor:
-		sLayerColors[0][0] = firstCornerColor
-		sLayerColors[0][1] = layerCornerColor
-		sLayerColors[0][2] = secondCornerColor
-	case sLayerCorners[0][2] == layerColor:
-		sLayerColors[0][0] = firstCornerColor
-		sLayerColors[0][1] = secondCornerColor
-		sLayerColors[0][2] = layerCornerColor
-	}
-
-	for i, corner := range sLayerCorners[1:] {
-		for j, color := range corner {
-			switch {
-			case sLayerCorners[0][0] == color:
-				sLayerColors[i+1][j] = sLayerColors[0][0]
-			case sLayerCorners[0][1] == color:
-				sLayerColors[i+1][j] = sLayerColors[0][1]
-			case sLayerCorners[0][2] == color:
-				sLayerColors[i+1][j] = sLayerColors[0][2]
-			default:
-				sLayerColors[i+1][j] = otherCornerColor
-			}
-		}
-	}
-
-	otherLayerColors := [4][3]int{}
-
-	switch {
-	case otherLayerCorners[0][0] == layerColor:
-		otherLayerColors[0][0] = layerCornerColor
-		otherLayerColors[0][1] = firstCornerColor
-		otherLayerColors[0][2] = secondCornerColor
-	case otherLayerCorners[0][1] == layerColor:
-		otherLayerColors[0][0] = firstCornerColor
-		otherLayerColors[0][1] = layerCornerColor
-		otherLayerColors[0][2] = secondCornerColor
-	case otherLayerCorners[0][2] == layerColor:
-		otherLayerColors[0][0] = firstCornerColor
-		otherLayerColors[0][1] = secondCornerColor
-		otherLayerColors[0][2] = layerCornerColor
-	default:
-		otherLayerColors[0][0] = otherCornerColor
-		otherLayerColors[0][1] = otherCornerColor
-		otherLayerColors[0][2] = otherCornerColor
-	}
-
-	for i, corner := range otherLayerCorners[1:] {
-		for j, color := range corner {
-			switch {
-			case otherLayerCorners[0][0] == color:
-				otherLayerColors[i+1][j] = otherLayerColors[0][0]
-			case otherLayerCorners[0][1] == color:
-				otherLayerColors[i+1][j] = otherLayerColors[0][1]
-			case otherLayerCorners[0][2] == color:
-				otherLayerColors[i+1][j] = otherLayerColors[0][2]
-			default:
-				otherLayerColors[i+1][j] = otherCornerColor
-			}
-		}
-	}
+	sLayerColors := getLayerColor(sLayerCorners, layerColor)
+	otherLayerColors := getLayerColor(otherLayerCorners, layerColor)
 
 	if sLayerColors == otherLayerColors {
 		return equal
 	}
 
 	return notEqual
+}
+
+func getLayerColor(layerCorners [][3]string, layerColor string) [4][3]int {
+	layerColors := [4][3]int{}
+
+	switch {
+	case layerCorners[0][0] == layerColor:
+		layerColors[0][0] = layerCornerColor
+		layerColors[0][1] = firstCornerColor
+		layerColors[0][2] = secondCornerColor
+	case layerCorners[0][1] == layerColor:
+		layerColors[0][0] = firstCornerColor
+		layerColors[0][1] = layerCornerColor
+		layerColors[0][2] = secondCornerColor
+	case layerCorners[0][2] == layerColor:
+		layerColors[0][0] = firstCornerColor
+		layerColors[0][1] = secondCornerColor
+		layerColors[0][2] = layerCornerColor
+	}
+
+	for i, corner := range layerCorners[1:] {
+		for j, color := range corner {
+			switch {
+			case layerCorners[0][0] == color:
+				layerColors[i+1][j] = layerColors[0][0]
+			case layerCorners[0][1] == color:
+				layerColors[i+1][j] = layerColors[0][1]
+			case layerCorners[0][2] == color:
+				layerColors[i+1][j] = layerColors[0][2]
+			default:
+				layerColors[i+1][j] = otherCornerColor
+			}
+		}
+	}
+
+	return layerColors
 }
 
 func index(array [3]string, element string) int {
@@ -891,6 +872,129 @@ func index(array [3]string, element string) int {
 	}
 
 	return -1
+}
+
+func (s *Skewb) FullMirror(other Skewber) bool {
+	if s.fullMirror(other) {
+		return equal
+	}
+
+	rotations := []string{"x", "x'", "x2", "y", "y'", "y2", "z", "z'", "z2", "x y", "x y'", "x y2", "x z", "x z'", "x z2", "x' y", "x' y'", "x' z", "x' z'", "x2 y", "x2 y'", "x2 z", "x2 z'"}
+
+	for _, rotation := range rotations {
+		other.ApplyWCAMoves(rotation)
+
+		if s.fullMirror(other) {
+			return equal
+		}
+
+		reverse := createReverse(rotation)
+		other.ApplyWCAMoves(reverse)
+	}
+
+	return notEqual
+}
+
+func (s *Skewb) fullMirror(other Skewber) bool {
+	sRelativeColors := getRelativeColors(s)
+	otherRelativeColors := getRelativeColors(other)
+
+	if sRelativeColors == otherRelativeColors {
+		return equal
+	}
+
+	return notEqual
+}
+
+func getRelativeColors(s Skewber) [6][5]int {
+	relativeColors := [6][5]int{}
+
+	upColor := s.GetUpCenterColor()
+	relativeColors[0][0] = 0
+	frontColor := s.GetFrontCenterColor()
+	relativeColors[1][0] = 1
+	rightColor := s.GetRightCenterColor()
+	relativeColors[2][0] = 2
+	backColor := s.GetBackCenterColor()
+	relativeColors[3][0] = 3
+	leftColor := s.GetLeftCenterColor()
+	relativeColors[4][0] = 4
+	downColor := s.GetDownCenterColor()
+	relativeColors[5][0] = 5
+
+	ufrRelativeColors := getCornerRelativeColors(s.GetUFRCornerColors(), upColor, frontColor, rightColor, backColor, leftColor, downColor)
+	relativeColors[0][1] = ufrRelativeColors[0]
+	relativeColors[1][1] = ufrRelativeColors[1]
+	relativeColors[2][1] = ufrRelativeColors[2]
+	urbRelativeColors := getCornerRelativeColors(s.GetURBCornerColors(), upColor, frontColor, rightColor, backColor, leftColor, downColor)
+	relativeColors[0][2] = urbRelativeColors[0]
+	relativeColors[2][2] = urbRelativeColors[1]
+	relativeColors[3][1] = urbRelativeColors[2]
+	ulfRelativeColors := getCornerRelativeColors(s.GetULFCornerColors(), upColor, frontColor, rightColor, backColor, leftColor, downColor)
+	relativeColors[0][3] = ulfRelativeColors[0]
+	relativeColors[4][1] = ulfRelativeColors[1]
+	relativeColors[1][2] = ulfRelativeColors[2]
+	ublRelativeColors := getCornerRelativeColors(s.GetUBLCornerColors(), upColor, frontColor, rightColor, backColor, leftColor, downColor)
+	relativeColors[0][4] = ublRelativeColors[0]
+	relativeColors[3][2] = ublRelativeColors[1]
+	relativeColors[4][2] = ublRelativeColors[2]
+	drfRelativeColors := getCornerRelativeColors(s.GetDRFCornerColors(), upColor, frontColor, rightColor, backColor, leftColor, downColor)
+	relativeColors[5][1] = drfRelativeColors[0]
+	relativeColors[2][3] = drfRelativeColors[1]
+	relativeColors[1][3] = drfRelativeColors[2]
+	dbrRelativeColors := getCornerRelativeColors(s.GetDBRCornerColors(), upColor, frontColor, rightColor, backColor, leftColor, downColor)
+	relativeColors[5][2] = dbrRelativeColors[0]
+	relativeColors[3][3] = dbrRelativeColors[1]
+	relativeColors[2][4] = dbrRelativeColors[2]
+	dflRelativeColors := getCornerRelativeColors(s.GetDFLCornerColors(), upColor, frontColor, rightColor, backColor, leftColor, downColor)
+	relativeColors[5][3] = dflRelativeColors[0]
+	relativeColors[1][4] = dflRelativeColors[1]
+	relativeColors[4][3] = dflRelativeColors[2]
+	dlbRelativeColors := getCornerRelativeColors(s.GetDLBCornerColors(), upColor, frontColor, rightColor, backColor, leftColor, downColor)
+	relativeColors[5][4] = dlbRelativeColors[0]
+	relativeColors[4][4] = dlbRelativeColors[1]
+	relativeColors[3][4] = dlbRelativeColors[2]
+
+	return relativeColors
+}
+
+func getCornerRelativeColors(colors [3]string, upColor, frontColor, rightColor, backColor, leftColor, downColor string) [3]int {
+	relativeColors := [3]int{}
+
+	for i := range 3 {
+		switch colors[i] {
+		case upColor:
+			relativeColors[i] = 0
+		case frontColor:
+			relativeColors[i] = 1
+		case rightColor:
+			relativeColors[i] = 2
+		case backColor:
+			relativeColors[i] = 3
+		case leftColor:
+			relativeColors[i] = 4
+		case downColor:
+			relativeColors[i] = 5
+		}
+	}
+
+	return relativeColors
+}
+
+func createReverse(moves string) string {
+	reverse := ""
+
+	for _, move := range strings.Split(moves, " ") {
+		if strings.Contains(move, "'") {
+			move = strings.ReplaceAll(move, "'", "")
+		} else {
+			move += "'"
+		}
+
+		reverse = fmt.Sprintf("%v %v", move, reverse)
+	}
+
+	return reverse
 }
 
 func (s *Skewb) GetUFRCornerColors() [3]string {
