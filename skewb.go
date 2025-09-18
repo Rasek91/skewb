@@ -763,12 +763,20 @@ func (s *Skewb) OneLayerMirror(other Skewber, layerColor string) bool {
 		return equal
 	}
 
-	for range 3 {
-		other.ApplyWCAMoves(fmt.Sprintf("%v", Y))
+	rotations := []string{"y", "y'", "y2"}
+
+	for _, rotation := range rotations {
+		other.ApplyWCAMoves(rotation)
 
 		if s.oneLayerMirror(other, layerColor) {
+			reverse := createReverse(rotation)
+			other.ApplyWCAMoves(reverse)
+
 			return equal
 		}
+
+		reverse := createReverse(rotation)
+		other.ApplyWCAMoves(reverse)
 	}
 
 	return notEqual
@@ -885,6 +893,9 @@ func (s *Skewb) FullMirror(other Skewber) bool {
 		other.ApplyWCAMoves(rotation)
 
 		if s.fullMirror(other) {
+			reverse := createReverse(rotation)
+			other.ApplyWCAMoves(reverse)
+
 			return equal
 		}
 
@@ -988,7 +999,9 @@ func createReverse(moves string) string {
 		if strings.Contains(move, "'") {
 			move = strings.ReplaceAll(move, "'", "")
 		} else {
-			move += "'"
+			if !strings.Contains(move, "2") {
+				move += "'"
+			}
 		}
 
 		reverse = fmt.Sprintf("%v %v", move, reverse)
