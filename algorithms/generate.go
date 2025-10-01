@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
+	"time"
 
 	"github.com/Rasek91/skewb"
 )
@@ -26,6 +27,7 @@ var (
 		6: {},
 		7: {},
 		8: {},
+		9: {},
 	}
 	preMoves   = []string{"x", "x'", "x2", "y", "y'", "y2", "z", "z'", "z2"}
 	solveMoves = []string{"R", "R'", "r", "r'", "B", "B'", "b", "b'", "f", "f'"}
@@ -143,17 +145,22 @@ func lastMoveIsDifferent(move1, move2 string) bool {
 }
 
 func main() {
+	previousTime := time.Now()
 	iteratorPreMoves("", 1, 1)
 	iteratorPreMoves("", 1, 2)
 	iteratorPreMoves("", 1, 3)
-	iteratorSolveMoves("", 1, 1)
-	iteratorSolveMoves("", 1, 2)
-	iteratorSolveMoves("", 1, 3)
-	iteratorSolveMoves("", 1, 4)
-	iteratorSolveMoves("", 1, 5)
-	iteratorSolveMoves("", 1, 6)
-	iteratorSolveMoves("", 1, 7)
-	iteratorSolveMoves("", 1, 8)
+	fmt.Printf("%s %v premoves finished\n", time.Since(previousTime), len(allPreMoves))
+
+	for i := 1; i <= 8; i++ {
+		previousTime := time.Now()
+
+		for _, solveMove := range allSolveMoves[i-1] {
+			iteratorSolveMoves(solveMove, i, i)
+		}
+
+		fmt.Printf("%s %v %v mover scrambles finished\n", time.Since(previousTime), len(allSolveMoves[i]), i)
+	}
+
 	archive, err := os.OpenFile(filepath.Join("algorithms", "moves.zip"), os.O_CREATE|os.O_WRONLY, 0644)
 
 	if err != nil {
