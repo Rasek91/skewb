@@ -30,7 +30,7 @@ var (
 		9: {},
 	}
 	preMoves   = []string{"x", "x'", "x2", "y", "y'", "y2", "z", "z'", "z2"}
-	solveMoves = []string{"R", "R'", "r", "r'", "B", "B'", "b", "b'", "f", "f'"}
+	solveMoves = []string{"F", "F'", "f", "f'", "R", "R'", "r", "r'", "b", "b'"}
 )
 
 func iteratorPreMoves(previousMoves string, currentIteration, maxIteration int) {
